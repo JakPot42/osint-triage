@@ -8,6 +8,7 @@ from __future__ import annotations
 import json
 import re
 
+from osint_triage.claude_client import call_claude
 from osint_triage.config import CLAUDE_MODEL, VALID_TOPICS
 
 _EXTRACTION_SYSTEM = f"""You are a senior intelligence analyst supporting foreign-language OSINT document triage.
@@ -77,22 +78,15 @@ def extract_item(title: str, body: str, model: str = CLAUDE_MODEL) -> dict:
 
     Returns a structured extraction dict. On Claude error, returns fallback dict.
     """
-    try:
-        import anthropic
-    except ImportError as exc:
-        raise ImportError("anthropic not installed — run: pip install anthropic") from exc
-
     text = f"TITLE: {title}\n\nBODY: {body}" if body else f"TITLE: {title}"
 
     try:
-        client = anthropic.Anthropic()
-        resp = client.messages.create(
-            model=model,
-            max_tokens=800,
+        raw = call_claude(
+            [{"role": "user", "content": text}],
             system=_EXTRACTION_SYSTEM,
-            messages=[{"role": "user", "content": text}],
+            max_tokens=800,
+            model=model,
         )
-        raw = resp.content[0].text
     except Exception:
         return dict(_FALLBACK_EXTRACTION)
 

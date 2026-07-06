@@ -1,6 +1,12 @@
-"""Tests for extractor.py."""
+"""Tests for extractor.py.
+
+Mocking target updated: extract_item now calls the shared
+osint_triage.claude_client.call_claude() wrapper instead of constructing its
+own anthropic.Anthropic() client, so tests patch "osint_triage.extractor.call_claude"
+directly and return plain response strings.
+"""
 import json
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 
@@ -58,14 +64,6 @@ def test_validate_bad_entities_replaced():
 
 # ── extract_item ──────────────────────────────────────────────────────────────
 
-def _mock_response(text: str):
-    content_block = MagicMock()
-    content_block.text = text
-    resp = MagicMock()
-    resp.content = [content_block]
-    return resp
-
-
 _GOOD_EXTRACTION = {
     "language": "Russian",
     "translation": "Russia tested a new ICBM at Plesetsk.",
@@ -78,9 +76,7 @@ _GOOD_EXTRACTION = {
 
 
 def test_extract_item_happy_path():
-    mock_client = MagicMock()
-    mock_client.messages.create.return_value = _mock_response(json.dumps(_GOOD_EXTRACTION))
-    with patch("anthropic.Anthropic", return_value=mock_client):
+    with patch("osint_triage.extractor.call_claude", return_value=json.dumps(_GOOD_EXTRACTION)):
         result = extract_item("Россия испытала МБР", "Текст статьи")
     assert result["language"] == "Russian"
     assert result["topic"] == "Nuclear/WMD"
@@ -88,9 +84,7 @@ def test_extract_item_happy_path():
 
 
 def test_extract_item_invalid_json_falls_back():
-    mock_client = MagicMock()
-    mock_client.messages.create.return_value = _mock_response("This is not JSON at all.")
-    with patch("anthropic.Anthropic", return_value=mock_client):
+    with patch("osint_triage.extractor.call_claude", return_value="This is not JSON at all."):
         result = extract_item("Some title", "Some body")
     assert result["language"] == "Unknown"
     assert result["topic"] == "Other"
@@ -98,9 +92,7 @@ def test_extract_item_invalid_json_falls_back():
 
 
 def test_extract_item_api_error_falls_back():
-    mock_client = MagicMock()
-    mock_client.messages.create.side_effect = Exception("API timeout")
-    with patch("anthropic.Anthropic", return_value=mock_client):
+    with patch("osint_triage.extractor.call_claude", side_effect=Exception("API timeout")):
         result = extract_item("Title", "Body")
     assert result["topic"] == "Other"
     assert result["claims"] == []
@@ -108,16 +100,12 @@ def test_extract_item_api_error_falls_back():
 
 def test_extract_item_with_markdown_fences():
     fenced = f"```json\n{json.dumps(_GOOD_EXTRACTION)}\n```"
-    mock_client = MagicMock()
-    mock_client.messages.create.return_value = _mock_response(fenced)
-    with patch("anthropic.Anthropic", return_value=mock_client):
+    with patch("osint_triage.extractor.call_claude", return_value=fenced):
         result = extract_item("Title", "Body")
     assert result["topic"] == "Nuclear/WMD"
 
 
 def test_extract_item_empty_title_body():
-    mock_client = MagicMock()
-    mock_client.messages.create.return_value = _mock_response(json.dumps(_GOOD_EXTRACTION))
-    with patch("anthropic.Anthropic", return_value=mock_client):
+    with patch("osint_triage.extractor.call_claude", return_value=json.dumps(_GOOD_EXTRACTION)):
         result = extract_item("", "")
     assert result is not None
