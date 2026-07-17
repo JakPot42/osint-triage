@@ -1,6 +1,6 @@
-# P50 — Foreign-Language OSINT Triage
+# Foreign-Language OSINT Triage
 
-> **INSTITUTIONAL/MEDIA LEVEL ONLY** — public foreign-language news sources, same posture as SENTINEL's existing adversary-source monitoring. Not surveillance of individuals.
+> **INSTITUTIONAL/MEDIA LEVEL ONLY** — public foreign-language news sources. Not surveillance of individuals.
 
 A CLI tool that ingests native-language adversary/state media, translates and extracts key claims via Claude Haiku, then scores each item deterministically against analyst-defined interest areas to produce a prioritized triage queue.
 
