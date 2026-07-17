@@ -106,11 +106,11 @@ osint_triage/
 
 ---
 
-## Portfolio context
+## Related projects
 
-P50 is part of the Intelligence Analysis cluster alongside:
-- **P37 SENTINEL** — English-language adversary media monitoring
-- **P41 redteam-eval** — adversarial LLM evaluation
-- **P45 AnalystDesk** — structured analytic workflow
+Companion tools in the same portfolio:
+- **SENTINEL** — English-language adversary media monitoring
+- **redteam-eval** — adversarial LLM evaluation
+- **Analyst's Desk** — structured analytic workflow
 
 GitHub: [JakPot42](https://github.com/JakPot42)
